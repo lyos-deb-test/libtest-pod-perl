@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	dh_auto_clean
+	[ ! -f $(CURDIR)/MANIFEST.SKIP.save ] || mv $(CURDIR)/MANIFEST.SKIP.save $(CURDIR)/MANIFEST.SKIP
+
+override_dh_auto_configure:
+	[ ! -f $(CURDIR)/MANIFEST.SKIP ] || cp $(CURDIR)/MANIFEST.SKIP $(CURDIR)/MANIFEST.SKIP.save
+	dh_auto_configure

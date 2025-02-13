@@ -1,0 +1,24 @@
+Source: libtest-pod-perl
+Maintainer: Debian Perl Group <pkg-perl-maintainers@lists.alioth.debian.org>
+Uploaders: gregor herrmann <gregoa@debian.org>
+Section: perl
+Testsuite: autopkgtest-pkg-perl
+Priority: optional
+Build-Depends: debhelper-compat (= 13)
+Build-Depends-Indep: perl
+Standards-Version: 4.6.2
+Vcs-Browser: https://salsa.debian.org/perl-team/modules/packages/libtest-pod-perl
+Vcs-Git: https://salsa.debian.org/perl-team/modules/packages/libtest-pod-perl.git
+Homepage: https://metacpan.org/release/Test-Pod
+Rules-Requires-Root: no
+
+Package: libtest-pod-perl
+Architecture: all
+Depends: ${misc:Depends},
+         ${perl:Depends}
+Description: module to test for POD errors
+ Test::Pod is a simple test for Perl's Plain Old Documentation (POD) format. It
+ checks your distribution's module, script and documentation files for issues
+ with the documentation syntax. In the CPAN community, it is considered a best
+ practice to use this module as an author test prior to releasing your packages
+ because it prevents issues with various applications that use the POD.
