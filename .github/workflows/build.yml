@@ -1,0 +1,46 @@
+name: build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        arch: [amd64, arm64, i386]
+    name: build-${{ matrix.arch }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: update repo
+      run: sudo apt update
+    - name: install debootstrap qemu
+      run: sudo apt install debootstrap qemu-user-static
+    - name: create rootfs
+      run: |
+        cd ..
+        mkdir rootfs-${{ matrix.arch }}
+        sudo debootstrap --no-check-gpg --arch=${{ matrix.arch }} bookworm rootfs-${{ matrix.arch }} ${{ secrets.DEBOOTSTARP_ADDRESS }}
+        sudo cp /usr/bin/qemu-aarch64-static rootfs-${{ matrix.arch }}/usr/bin
+    - name: build deb
+      run: |
+        REPO_NAME="${{ github.repository }}"
+        REPO_NAME=${REPO_NAME#*/}
+        cd ..
+        sudo mount -t proc /proc rootfs-${{ matrix.arch }}/proc
+        sudo mount -t sysfs /sys rootfs-${{ matrix.arch }}/sys
+        sudo mount -o bind /dev rootfs-${{ matrix.arch }}/dev
+        sudo mount -o bind /dev/pts rootfs-${{ matrix.arch }}/dev/pts
+        sudo cp -r "$REPO_NAME" rootfs-${{ matrix.arch }}/root
+        sudo chroot rootfs-${{ matrix.arch }} /bin/bash -c "apt install -y build-essential devscripts dh-make fakeroot ; cd root ; cp ${REPO_NAME}/.github/build_deb.sh . ; bash build_deb.sh"
+    - name: Collect build artifacts
+      run: |
+        mkdir -p artifacts/${{ matrix.arch }}
+        # 排除包含dbgsym和build-deps的deb文件
+        sudo find ../rootfs-${{ matrix.arch }}/root/ -maxdepth 1 -type f \( -name '*.deb' ! -name '*dbgsym*' ! -name '*build-deps*' -o -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.dsc' \) -exec cp {} artifacts/${{ matrix.arch }} \;
+        sudo chown -R $(id -u):$(id -g) artifacts/${{ matrix.arch }}
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages-${{ matrix.arch }}
+        path: artifacts/${{ matrix.arch }}/*
